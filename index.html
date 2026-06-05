@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>媒韵 MéiYùn — Luyện nghe nói tiếng Trung thương mại</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2=family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<style>
+/* ============================================================
+   HỆ THỐNG BIẾN ĐỔI MÀU SẮC (CSS VARIABLES) & THEME HỆ THỐNG
+   ============================================================ */
+:root {
+  --purple: #6c63ff; --purple-light: #ede9ff; --purple-mid: #a89cf7;
+  --teal: #4db8d4; --teal-light: #e0f4fb; --pink: #f48fb1; --pink-light: #fce4ef;
+  --yellow: #ffd54f; --green: #4caf80; --green-light: #e8f8ee; --red: #e74c3c;
+  --bg: #f8f9ff; --white: #ffffff; --text-dark: #1a1a2e; --text-gray: #9090a8;
+  --text-mid: #5a5a72; --border: #eeebf8; --shadow: 0 4px 24px rgba(108,99,255,0.08);
+  --shadow-md: 0 8px 32px rgba(108,99,255,0.12); --radius: 16px; --sidebar-w: 64px;
+  --font-body: 'Be Vietnam Pro', sans-serif; --font-display: 'Montserrat', sans-serif;
+}
+
+[data-theme="dark"] {
+  --purple: #8b7fff; --purple-light: #2d2a4a; --purple-mid: #a89cf7;
+  --teal: #5cc8e4; --teal-light: #1a3a4a; --pink: #f48fb1; --pink-light: #3a2a35;
+  --yellow: #ffd54f; --green: #5cbf90; --green-light: #1a3a2a; --red: #ff6b6b;
+  --bg: #0f0f1a; --white: #1a1a2e; --text-dark: #f0f0ff; --text-gray: #8888a8;
+  --text-mid: #b0b0c8; --border: #2a2a4a; --shadow: 0 4px 24px rgba(0,0,0,0.3);
+}
+
+/* Reset cơ bản */
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+html,body { height: 100%; overflow: hidden; }
+body { font-family: var(--font-body); background: var(--bg); color: var(--text-dark); font-size: 14px; line-height: 1.5; }
+
+/* Hình khối chuyển động nền */
+.blob-container { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+.blob { position: absolute; border-radius: 50%; filter: blur(50px); opacity: 0.6; animation: float 10s ease-in-out infinite alternate; }
+.blob-1 { width: 400px; height: 400px; background: var(--purple-light); top: -100px; left: -100px; }
+.blob-2 { width: 300px; height: 300px; background: var(--teal-light); bottom: -50px; right: -50px; animation-delay: 2s; }
+@keyframes float { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(30px, 20px) scale(1.1); } }
+
+/* App Shell Layout */
+.app { display: flex; height: 100vh; position: relative; z-index: 1; }
+.sidebar { width: var(--sidebar-w); background: var(--white); border-right: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; padding: 16px 0; gap: 24px; }
+.logo { width: 40px; height: 40px; background: linear-gradient(135deg, var(--purple), var(--teal)); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 18px; cursor: pointer; }
+.nav-icons { display: flex; flex-direction: column; gap: 12px; flex: 1; }
+.nav-item { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative; color: var(--text-gray); transition: all 0.2s; }
+.nav-item.active, .nav-item:hover { background: var(--purple-light); color: var(--purple); }
+.nav-item svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; }
+.nav-tooltip { position: absolute; left: 56px; top: 50%; transform: translateY(-50%); background: var(--text-dark); color: white; padding: 4px 8px; border-radius: 6px; font-size: 11px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 0.2s; z-index: 10; }
+.nav-item:hover .nav-tooltip { opacity: 1; }
+
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.topbar { height: 64px; background: rgba(255,255,255,0.8); backdrop-filter: blur(8px); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 24px; justify-content: space-between; }
+.content { flex: 1; overflow: hidden; position: relative; }
+.page { position: absolute; inset: 0; padding: 24px; overflow-y: auto; display: none; }
+.page.active { display: block; }
+
+/* Card Components tiêu chuẩn */
+.card { background: var(--white); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); border: 1px solid var(--border); }
+
+/* ============================================================
+   CSS PHÂN HỆ MỚI: CHƯƠNG TRÌNH ĐÀO TẠO ĐẠI HỌC NGOẠI THƯƠNG (FTU)
+   ============================================================ */
+.ftu-layout { display: grid; grid-template-columns: 1fr 350px; gap: 20px; height: 100%; overflow: hidden; }
+.ftu-main-panel { overflow-y: auto; padding-right: 4px; height: 100%; display: flex; flex-direction: column; gap: 16px; }
+.ftu-side-panel { height: 100%; display: flex; flex-direction: column; }
+
+/* Màn hình 1: Danh sách Chặng & Học phần Accordion */
+.ftu-stage-accordion { display: flex; flex-direction: column; gap: 12px; }
+.accordion-item { background: var(--white); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; box-shadow: var(--shadow); }
+.accordion-header { padding: 16px 20px; background: linear-gradient(90deg, var(--white), var(--bg)); display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; }
+.accordion-title { font-family: var(--font-display); font-weight: 700; color: var(--text-dark); display: flex; align-items: center; gap: 10px; }
+.accordion-icon { transition: transform 0.3s; color: var(--text-gray); }
+.accordion-item.open .accordion-icon { transform: rotate(180deg); }
+.accordion-body { display: none; padding: 16px 20px; border-top: 1px solid var(--border); background: var(--white); }
+.accordion-item.open .accordion-body { display: block; }
+
+.course-grid { display: flex; flex-direction: column; gap: 16px; }
+.course-card { background: var(--bg); border-radius: 12px; padding: 16px; border: 1px solid var(--border); }
+.course-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.course-badge { background: var(--purple-light); color: var(--purple); font-size: 11px; font-weight: 700; padding: 4px 8px; border-radius: 6px; text-transform: uppercase; }
+.course-name { font-weight: 600; color: var(--text-dark); flex: 1; margin-left: 10px; }
+.course-progress-wrapper { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.progress-bar-container { flex: 1; height: 6px; background: var(--border); border-radius: 99px; overflow: hidden; }
+.progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--purple), var(--teal)); width: 0%; transition: width 0.5s ease-in-out; }
+.progress-text { font-size: 11px; font-weight: bold; color: var(--purple); width: 32px; text-align: right; }
+
+.lesson-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+.lesson-item { background: var(--white); border: 1px solid var(--border); padding: 12px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: all 0.2s; }
+.lesson-item:hover { border-color: var(--purple); background: var(--purple-light); transform: translateY(-1px); }
+.lesson-icon-play { width: 24px; height: 24px; background: var(--white); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow); color: var(--purple); }
+
+/* Màn hình 2: Khung Chi tiết Bài học & Chế độ Luyện tập */
+.lesson-detail-view { display: flex; flex-direction: column; gap: 16px; height: 100%; }
+.back-btn { display: inline-flex; align-items: center; gap: 6px; color: var(--text-gray); cursor: pointer; font-weight: 500; transition: color 0.2s; border: none; background: transparent; width: fit-content; }
+.back-btn:hover { color: var(--purple); }
+.tabs-header { display: flex; border-bottom: 2px solid var(--border); gap: 20px; margin-top: 8px; }
+.tab-link { padding: 10px 4px; font-weight: 600; color: var(--text-gray); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.2s; }
+.tab-link.active { color: var(--purple); border-bottom-color: var(--purple); }
+.tab-content { display: none; flex: 1; overflow-y: auto; padding-top: 16px; }
+.tab-content.active { display: flex; flex-direction: column; }
+
+/* Sub-Tab 1: Nghe hiểu Thương mại */
+.audio-player-widget { background: linear-gradient(135deg, var(--purple-light), var(--teal-light)); padding: 16px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+.audio-controls { display: flex; align-items: center; gap: 12px; }
+.audio-btn { width: 36px; height: 36px; background: var(--white); border: none; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: var(--shadow); color: var(--text-dark); font-weight: 600; font-size: 11px; }
+.audio-btn-play { background: var(--purple); color: white; width: 42px; height: 42px; }
+.speed-group { display: flex; gap: 4px; background: rgba(255,255,255,0.5); padding: 4px; border-radius: 8px; }
+.speed-btn { padding: 4px 8px; border: none; background: transparent; font-size: 11px; font-weight: bold; color: var(--text-mid); cursor: pointer; border-radius: 6px; }
+.speed-btn.active { background: var(--white); color: var(--purple); box-shadow: var(--shadow); }
+.audio-timeline { flex: 1; display: flex; align-items: center; gap: 10px; font-size: 11px; color: var(--text-mid); }
+.timeline-slider { flex: 1; appearance: none; height: 4px; background: rgba(0,0,0,0.1); border-radius: 2px; outline: none; }
+.timeline-slider::-webkit-slider-thumb { appearance: none; width: 12px; height: 12px; border-radius: 50%; background: var(--purple); cursor: pointer; }
+
+.transcript-container { display: flex; flex-direction: column; gap: 16px; }
+.transcript-line { background: var(--white); padding: 12px 16px; border-radius: 10px; border-left: 4px solid var(--purple-mid); box-shadow: var(--shadow); cursor: pointer; transition: background 0.2s; }
+.transcript-line:hover, .transcript-line.playing { background: var(--purple-light); }
+.line-zh { font-size: 18px; font-weight: 500; color: var(--text-dark); margin-bottom: 4px; letter-spacing: 0.5px; }
+.line-py { font-size: 13px; color: var(--purple); font-weight: 500; margin-bottom: 2px; }
+.line-vi { font-size: 13px; color: var(--text-mid); }
+
+/* Sub-Tab 2: Phản xạ Nói AI Chatbot UI */
+.ai-chat-box { background: var(--white); border: 1px solid var(--border); border-radius: 12px; display: flex; flex-direction: column; height: 380px; overflow: hidden; box-shadow: var(--shadow); }
+.chat-messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.chat-bubble { max-width: 80%; padding: 10px 14px; border-radius: 12px; font-size: 13px; line-height: 1.5; position: relative; }
+.chat-bubble.ai { background: var(--bg); color: var(--text-dark); align-self: flex-start; border-top-left-radius: 2px; border-left: 3px solid var(--teal); }
+.chat-bubble.user { background: var(--purple); color: white; align-self: flex-end; border-top-right-radius: 2px; }
+.bubble-context { font-size: 11px; color: var(--text-gray); margin-top: 4px; border-top: 1px dashed rgba(0,0,0,0.05); padding-top: 2px; }
+.chat-bubble.user .bubble-context { color: rgba(255,255,255,0.7); border-top-color: rgba(255,255,255,0.15); }
+
+.keyword-suggestions { padding: 8px 16px; background: var(--bg); border-top: 1px solid var(--border); display: flex; flex-wrap: wrap; gap: 6px; }
+.keyword-chip { background: var(--white); border: 1px solid var(--border); padding: 4px 10px; border-radius: 99px; font-size: 11px; color: var(--text-mid); font-weight: 500; cursor: pointer; }
+.keyword-chip:hover { border-color: var(--teal); color: var(--teal); }
+
+.chat-input-area { padding: 12px 16px; background: var(--white); border-top: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
+.mic-btn { width: 44px; height: 44px; background: var(--red); color: white; border: none; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 12px rgba(231,76,60,0.3); transition: all 0.2s; }
+.mic-btn:hover { transform: scale(1.05); }
+.mic-btn.recording { animation: pulseMic 1.2s infinite; background: #c0392b; }
+@keyframes pulseMic { 0% { box-shadow: 0 0 0 0 rgba(231,76,60,0.7); } 70% { box-shadow: 0 0 0 10px rgba(231,76,60,0); } 100% { box-shadow: 0 0 0 0 rgba(231,76,60,0); } }
+.chat-status-text { font-size: 13px; color: var(--text-gray); flex: 1; }
+
+/* Màn hình 3: FTU Commercial Glossary (Cột phải cố định) */
+.glossary-card { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--white); border-radius: var(--radius); border: 1px solid var(--border); box-shadow: var(--shadow); }
+.glossary-header { padding: 16px; border-bottom: 1px solid var(--border); background: linear-gradient(135deg, var(--white), var(--teal-light)); }
+.glossary-title { font-family: var(--font-display); font-size: 14px; font-weight: 700; color: var(--text-dark); display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.glossary-search-box { display: flex; align-items: center; background: var(--bg); border: 1px solid var(--border); padding: 6px 12px; border-radius: 8px; width: 100%; }
+.glossary-search-box input { border: none; background: transparent; outline: none; font-size: 12px; width: 100%; color: var(--text-dark); }
+.glossary-list { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.glossary-item { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px; transition: border-color 0.2s; }
+.glossary-item:hover { border-color: var(--teal); }
+.glossary-word-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
+.glossary-term { font-size: 11px; font-weight: 800; background: var(--teal); color: white; padding: 2px 6px; border-radius: 4px; }
+.glossary-zh { font-size: 16px; font-weight: 600; color: var(--text-dark); }
+.glossary-py { font-size: 12px; color: var(--teal); font-weight: 500; margin-bottom: 4px; }
+.glossary-mean { font-size: 12px; color: var(--text-mid); font-weight: 500; margin-bottom: 6px; background: var(--white); padding: 4px 8px; border-radius: 6px; border: 1px dashed var(--border); }
+.glossary-examples { display: flex; flex-direction: column; gap: 4px; border-top: 1px solid rgba(0,0,0,0.03); padding-top: 6px; }
+.glossary-ex { font-size: 11px; color: var(--text-gray); line-height: 1.4; position: relative; padding-left: 10px; }
+.glossary-ex::before { content: "•"; position: absolute; left: 0; color: var(--teal); }
+
+/* Toast Notifications */
+.toast-msg { position: fixed; bottom: 20px; right: 20px; background: var(--text-dark); color: white; padding: 10px 18px; border-radius: 8px; box-shadow: var(--shadow-md); font-size: 13px; font-weight: 500; z-index: 1000; transform: translateY(100px); opacity: 0; transition: all 0.3s; }
+.toast-msg.show { transform: translateY(0); opacity: 1; }
+</style>
+</head>
+
+<body>
+<div class="blob-container">
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+</div>
+
+<div class="toast-msg" id="toastMessage">Thông báo ứng dụng</div>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="logo" onclick="switchPage('dashboard', document.querySelector('[data-page=dashboard]'))">M</div>
+    <nav class="nav-icons">
+      <div class="nav-item active" data-page="dashboard" onclick="switchPage('dashboard', this); addNavRipple(this)">
+        <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <span class="nav-tooltip">Tổng quan</span>
+      </div>
+      <div class="nav-item" data-page="ftu" onclick="switchPage('ftu', this); addNavRipple(this)">
+        <svg viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5"/></svg>
+        <span class="nav-tooltip">Chương trình FTU</span>
+      </div>
+      <div class="nav-item" data-page="lessons" onclick="switchPage('lessons', this); addNavRipple(this)">
+        <svg viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+        <span class="nav-tooltip">Bài học Video</span>
+      </div>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <h2 style="font-family: var(--font-display); font-size: 16px; font-weight: 700;" id="topbarTitle">Tổng quan hệ thống</h2>
+      <div style="font-size: 12px; color: var(--text-gray); font-weight: 600;">FTU CHINESE BUSINESS INTEGRATION v2.0</div>
+    </div>
+
+    <div class="content">
+      <div class="page active" id="page-dashboard">
+        <div class="card" style="margin-bottom: 16px;">
+          <h3 style="margin-bottom: 6px; font-family: var(--font-display);">Chào mừng bạn trở lại!</h3>
+          <p style="color: var(--text-gray);">Hãy chọn tab "Chương trình FTU" bên trái để khám phá khung đào tạo Đại học Ngoại thương tích hợp trí tuệ nhân tạo.</p>
+        </div>
+      </div>
+
+      <div class="page" id="page-lessons">
+        <div class="card">
+          <h3 style="font-family: var(--font-display);">Kho tư liệu Video</h3>
+        </div>
+      </div>
+
+      <div class="page" id="page-ftu">
+        <div class="ftu-layout">
+          
+          <div class="ftu-main-panel">
+            
+            <div id="ftuCurriculumView" class="ftu-stage-accordion">
+              </div>
+
+            <div id="ftuLessonDetailView" class="lesson-detail-view" style="display: none;">
+              <button class="back-btn" onclick="exitLessonView()">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                Quay lại Chương trình chính
+              </button>
+              
+              <div class="card" style="padding: 16px; border-color: var(--purple-light);">
+                <div style="font-size: 11px; text-transform: uppercase; font-weight: 800; color: var(--purple);" id="detCourseCode">CODE</div>
+                <h2 style="font-family: var(--font-display); font-size: 18px; margin-top: 2px;" id="detLessonTitle">Tiêu đề bài học</h2>
+                
+                <div class="tabs-header">
+                  <div class="tab-link active" onclick="switchPracticeTab('listening', this)">Nghe hiểu Thương mại</div>
+                  <div class="tab-link" onclick="switchPracticeTab('speaking', this)">Phản xạ Nói AI</div>
+                </div>
+              </div>
+
+              <div id="practiceTab-listening" class="tab-content active">
+                <div class="audio-player-widget">
+                  <div class="audio-controls">
+                    <button class="audio-btn audio-btn-play" onclick="showToast('Phát/Tạm dừng Audio giả lập','success')" id="playBtn">▶</button>
+                  </div>
+                  <div class="audio-timeline">
+                    <span>0:00</span>
+                    <input type="range" class="timeline-slider" min="0" max="100" value="35">
+                    <span>2:15</span>
+                  </div>
+                  <div class="speed-group">
+                    <button class="speed-btn" onclick="changeSpeed(0.8, this)">0.8x</button>
+                    <button class="speed-btn active" onclick="changeSpeed(1.0, this)">1.0x</button>
+                    <button class="speed-btn" onclick="changeSpeed(1.2, this)">1.2x</button>
+                  </div>
+                </div>
+                
+                <div class="transcript-container" id="transcriptContainer">
+                  </div>
+              </div>
+
+              <div id="practiceTab-speaking" class="tab-content">
+                <div class="ai-chat-box">
+                  <div class="chat-messages" id="chatMessagesBox">
+                    </div>
+                  <div class="keyword-suggestions" id="chatSuggestionsBox">
+                    </div>
+                  <div class="chat-input-area">
+                    <button class="mic-btn" id="micButton" onclick="handleMicClick()">🎙️</button>
+                    <div class="chat-status-text" id="micStatusText">Nhấn giữ hoặc click vào Mic để bắt đầu nói trả lời AI...</div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <div class="ftu-side-panel">
+            <div class="glossary-card">
+              <div class="glossary-header">
+                <div class="glossary-title">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6 17h14M4 4.5A2.5 2.5 0 0 1 6 2h14v20H6a2.5 2.5 0 0 1-2-2.5z"/></svg>
+                  FTU Commercial Glossary
+                </div>
+                <div class="glossary-search-box">
+                  <input type="text" id="glossarySearchInput" oninput="filterGlossary()" placeholder="Tìm nhanh thuật ngữ (L/C, FOB, CIF...)">
+                </div>
+              </div>
+              <div class="glossary-list" id="glossaryListContainer">
+                </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script>
+// I. DATA STRUCTURE INITIALIZATION (MASTER DATA REQUIREMENTS)
+const FTU_CURRICULUM_DATA = [
+  {
+    "stage_id": "stage_1",
+    "stage_name": "Chặng 1: Xây nền Phản xạ (Năm 1-2)",
+    "courses": [
+      {
+        "course_code": "TTR312",
+        "course_name": "Nghe hiểu I",
+        "progress": 80,
+        "lessons": [
+          {"lesson_id": "stage1_c1_l1", "title": "Bài 1: Giao tiếp Ngoại giao Doanh nghiệp Cơ bản"},
+          {"lesson_id": "stage1_c1_l2", "title": "Bài 2: Tiếp đón Phái đoàn Thương mại Quốc tế"}
+        ]
+      },
+      {
+        "course_code": "TTR307",
+        "course_name": "Nói I",
+        "progress": 45,
+        "lessons": [
+          {"lesson_id": "stage1_c2_l1", "title": "Bài 1: Giới thiệu Cơ cấu và Sản phẩm Công ty"},
+          {"lesson_id": "stage1_c2_l2", "title": "Bài 2: Tham quan Nhà xưởng & Dây chuyền sản xuất"}
+        ]
+      }
+    ]
+  },
+  {
+    "stage_id": "stage_2",
+    "stage_name": "Chặng 2: Tăng tốc Thương mại (Năm 3)",
+    "courses": [
+      {
+        "course_code": "TTR330",
+        "course_name": "Đàm phán thương mại",
+        "progress": 60,
+        "lessons": [
+          {"lesson_id": "stage2_c1_l1", "title": "Bài 10: Thỏa thuận Giá cả & Phương thức Thanh toán Quốc tế"},
+          {"lesson_id": "stage2_c1_l2", "title": "Bài 11: Đàm phán Điều khoản Bảo hiểm & Vận chuyển"}
+        ]
+      }
+    ]
+  },
+  {
+    "stage_id": "stage_3",
+    "stage_name": "Chặng 3: Ứng dụng Thực chiến (Năm 4 & Tốt nghiệp)",
+    "courses": [
+      {
+        "course_code": "TTR405",
+        "course_name": "Tiếng Trung Thương mại Nâng cao",
+        "progress": 15,
+        "lessons": [
+          {"lesson_id": "stage3_c1_l1", "title": "Bài 20: Giải quyết Tranh chấp, Khiếu nại & Bồi thường Hợp đồng"}
+        ]
+      },
+      {
+        "course_code": "TTR410",
+        "course_name": "Biên dịch thương mại",
+        "progress": 0,
+        "lessons": [
+          {"lesson_id": "stage3_c2_l1", "title": "Bài 5: Dịch thuật Văn kiện Thỏa thuận Hợp tác Chiến lược"}
+        ]
+      }
+    ]
+  }
+];
+
+const FTU_LESSON_DETAILS_DB = {
+  "stage2_c1_l1": {
+    "course_code": "TTR330 - ĐÀM PHÁN THƯƠNG MẠI",
+    "title": "Bài 10: Thỏa thuận Giá cả & Phương thức Thanh toán Quốc tế",
+    "transcript": [
+      { "zh": "我们希望贵 Nhận 能够给予 5% 的折扣。", "py": "Wǒmen xīwàng guì gōngsī nénggòu jǐyǔ bǎifēnzhī wǔ de zhékòu.", "vi": "Chúng tôi hy vọng quý công ty có thể giảm giá 5%." },
+      { "zh": "如果贵国订货量超过一万件，我们可以考虑这个让步。", "py": "Rúguǒ guìguó dìnghuò liàng chāoguò yī wàn jiàn, wǒmen kěyǐ kǎolǜ zhège ràngbù.", "vi": "Nếu số lượng đặt hàng của quý khách vượt quá 10,000 chiếc, chúng tôi có thể cân nhắc sự nhượng bộ này." },
+      { "zh": "关于付款方式，我们建议采用不可撤销的信用证。", "py": "Guānyú fùkuǎn fāngshì, wǒmen jiànyì cǎiyòng bùkě chèxiāo de xìnyòngzhèng.", "vi": "Về phương thức thanh toán, chúng tôi đề xuất sử dụng thư tín dụng (L/C) không thể hủy ngang." }
+    ],
+    "ai_situation": "Tình huống: Đối tác Trung Quốc đang chê đơn giá FOB của bạn quá cao và muốn đổi sang phương thức thanh toán trả chậm D/P thay vì L/C.",
+    "ai_prompt": "贵公司的FOB报价有些偏高，而且我们希望采用D/P付款，贵方能否接受？",
+    "ai_keywords": ["报价 (Báo giá)", "不可撤销信用证 (L/C không hủy ngang)", "让步 (Nhượng bộ)", "成本 (Chi phí)"]
+  }
+};
+
+const FTU_GLOSSARY_DATA = [
+  { "term": "L/C", "zh": "信用证", "py": "xìnyòngzhèng", "mean": "Thư tín dụng", "ex1": "我们只接受不可撤销的信用证付款。", "ex2": "开证行已经将信用证发过来了。" },
+  { "term": "FOB", "zh": "离岸价", "py": "lí'ànjià", "mean": "Giá giao lên tàu", "ex1": "我们的报价是一律按上海港FOB计算。", "ex2": "FOB价格不包括国际海运费和保险费。" },
+  { "term": "CIF", "zh": "到岸价", "py": "dào'ànjià", "mean": "Giá bao gồm tiền hàng, bảo hiểm và cước phí", "ex1": "我们通常采用CIF条款进行跨国贸易。", "ex2": "请向我们提供最新的CIF海防港报价。" },
+  { "term": "D/P", "zh": "付款交单", "py": "fùkuǎn jiāodān", "mean": "Nhờ thu kèm chứng từ thanh toán", "ex1": "远期D/P对出口商来说存在较大的收汇风险。", "ex2": "为了促成这笔交易，双方同意使用D/P方式。" }
+];
+
+// II. CORE NAVIGATION INTERACTION
+function switchPage(pageId, navElement) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+  
+  const targetPage = document.getElementById('page-' + pageId);
+  if (targetPage) {
+    targetPage.classList.add('active');
+    navElement.classList.add('active');
+    
+    // Đổi tiêu đề Topbar tương ứng cho đẹp
+    const titles = { 'dashboard': 'Tổng quan hệ thống', 'lessons': 'Kho tư liệu Video', 'ftu': 'Hệ thống Đào tạo Chuyên ngành FTU' };
+    document.getElementById('topbarTitle').innerText = titles[pageId] || 'Ứng dụng';
+  }
+}
+
+function addNavRipple(el) {
+  el.classList.add('nav-ripple');
+  setTimeout(() => el.classList.remove('nav-ripple'), 400);
+}
+
+function toggleAccordion(headerElement) {
+  const item = headerElement.parentElement;
+  item.classList.toggle('open');
+}
+
+// UI Notification Wrapper
+function showToast(text, type='info', duration=2500) {
+  const toast = document.getElementById('toastMessage');
+  toast.innerText = text;
+  toast.style.background = type === 'success' ? 'var(--green)' : type === 'error' ? 'var(--red)' : 'var(--text-dark)';
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), duration);
+}
+
+// III. RENDER ENGINES (API SIMULATION)
+function renderCurriculum() {
+  const container = document.getElementById('ftuCurriculumView');
+  container.innerHTML = FTU_CURRICULUM_DATA.map((stage, idx) => `
+    <div class="accordion-item ${idx === 0 ? 'open' : ''}">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        <div class="accordion-title">
+          <span style="color:var(--purple)">🎓</span> ${stage.stage_name}
+        </div>
+        <span class="accordion-icon">▼</span>
+      </div>
+      <div class="accordion-body">
+        <div class="course-grid">
+          ${stage.courses.map(course => `
+            <div class="course-card">
+              <div class="course-header">
+                <span class="course-badge">${course.course_code}</span>
+                <span class="course-name">${course.course_name}</span>
+              </div>
+              <div class="course-progress-wrapper">
+                <div class="progress-bar-container">
+                  <div class="progress-bar-fill" style="width: ${course.progress}%"></div>
+                </div>
+                <div class="progress-text">${course.progress}%</div>
+              </div>
+              <div class="lesson-list">
+                ${course.lessons.map(les => `
+                  <div class="lesson-item" onclick="loadLessonDetail('${les.lesson_id}')">
+                    <div class="lesson-icon-play">▶</div>
+                    <div style="font-size:12px; font-weight:500; color:var(--text-dark)">${les.title}</div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderGlossary(data = FTU_GLOSSARY_DATA) {
+  const container = document.getElementById('glossaryListContainer');
+  container.innerHTML = data.map(item => `
+    <div class="glossary-item">
+      <div class="glossary-word-row">
+        <span class="glossary-zh">${item.zh}</span>
+        <span class="glossary-term">${item.term}</span>
+      </div>
+      <div class="glossary-py">${item.py}</div>
+      <div class="glossary-mean">${item.mean}</div>
+      <div class="glossary-examples">
+        <div class="glossary-ex">${item.ex1}</div>
+        <div class="glossary-ex">${item.ex2}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// IV. DETAILED VIEW LOGIC (SCREEN 2)
+function loadLessonDetail(lessonId) {
+  // Giả lập GET /api/lesson/{id}
+  const data = FTU_LESSON_DETAILS_DB[lessonId];
+  if (!data) {
+    showToast("Bài học này đang được cập nhật nội dung số hóa!", "info");
+    return;
+  }
+
+  // Chuyển view màn hình
+  document.getElementById('ftuCurriculumView').style.display = 'none';
+  document.getElementById('ftuLessonDetailView').style.display = 'flex';
+
+  // Điền dữ liệu text
+  document.getElementById('detCourseCode').innerText = data.course_code;
+  document.getElementById('detLessonTitle').innerText = data.title;
+
+  // Render phần Nghe hiểu Transcript
+  const transContainer = document.getElementById('transcriptContainer');
+  transContainer.innerHTML = data.transcript.map((line, i) => `
+    <div class="transcript-line ${i===0?'playing':''}" onclick="showToast('Đang tua phát dòng này...','info')">
+      <div class="line-zh">${line.zh}</div>
+      <div class="line-py">${line.py}</div>
+      <div class="line-vi">${line.vi}</div>
+    </div>
+  `).join('');
+
+  // Khởi tạo cửa sổ Chatbot AI Nói Phản xạ
+  initAIChatSession(data);
+}
+
+function exitLessonView() {
+  document.getElementById('ftuLessonDetailView').style.display = 'none';
+  document.getElementById('ftuCurriculumView').style.display = 'flex';
+}
+
+function switchPracticeTab(tabName, linkEl) {
+  document.querySelectorAll('.tab-link').forEach(l => l.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  
+  linkEl.classList.add('active');
+  document.getElementById('practiceTab-' + tabName).classList.add('active');
+}
+
+function changeSpeed(speed, btn) {
+  document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  showToast(`Thay đổi tốc độ phát audio thành ${speed}x`, 'success');
+}
+
+// V. AI ROLEPLAY CHATBOT LOGIC
+function initAIChatSession(lessonData) {
+  const msgsBox = document.getElementById('chatMessagesBox');
+  const chipsBox = document.getElementById('chatSuggestionsBox');
+
+  // Đưa ra câu chào và tình huống của AI thương mại
+  msgsBox.innerHTML = `
+    <div class="chat-bubble ai">
+      <strong>Hệ thống AI Đàm phán:</strong><br>${lessonData.ai_situation}
+    </div>
+    <div class="chat-bubble ai">
+      ${lessonData.ai_prompt}
+      <div class="bubble-context">Pinyin: Guī gōngsī de FOB bàojià yǒuxiē piāngāo, érqiě wǒmen xīwàng cǎiyòng D/P fùkuǎn, guìfāng néngfǒu jiēshòu?</div>
+    </div>
+  `;
+
+  // Gợi ý keyword chip
+  chipsBox.innerHTML = lessonData.ai_keywords.map(kw => `
+    <div class="keyword-chip" onclick="showToast('Sử dụng từ khóa này khi nói sẽ được cộng điểm AI!','info')">${kw}</div>
+  `).join('');
+}
+
+let isRecording = false;
+function handleMicClick() {
+  const mic = document.getElementById('micButton');
+  const txt = document.getElementById('micStatusText');
+
+  if (!isRecording) {
+    isRecording = true;
+    mic.classList.add('recording');
+    txt.innerText = "🎙️ AI đang lắng nghe giọng nói của bạn... Hãy nói tiếng Trung thương mại!";
+    showToast("Bắt đầu ghi âm bộ lọc tiếng nói", "info");
+  } else {
+    isRecording = false;
+    mic.classList.remove('recording');
+    txt.innerText = "Đang phân tích dữ liệu âm thanh nói...";
+    
+    setTimeout(() => {
+      // Giả lập người dùng nói thành công
+      const msgsBox = document.getElementById('chatMessagesBox');
+      msgsBox.innerHTML += `
+        <div class="chat-bubble user">
+          关于付款方式，我们必须坚持使用不可撤销信用证，不能接受D/P付款。
+          <div class="bubble-context">Phân tích phát âm AI: 92% (Hoàn thành mục tiêu tracking tiến độ)</div>
+        </div>
+        <div class="chat-bubble ai">
+          贵方的立场我们了解 liao。那么关于订货量增加的话，信用证的开立期限能否放宽？
+        </div>
+      `;
+      txt.innerText = "Nhấn giữ hoặc click vào Mic để tiếp tục đối thoại...";
+      msgsBox.scrollTop = msgsBox.scrollHeight;
+      showToast("Đã cập nhật tiến trình luyện nói thành công vào DB!", "success");
+    }, 1800);
+  }
+}
+
+// VI. GLOSSARY QUICK SEARCH FILTER
+function filterGlossary() {
+  const query = document.getElementById('glossarySearchInput').value.toLowerCase().trim();
+  const filtered = FTU_GLOSSARY_DATA.filter(item => 
+    item.term.toLowerCase().includes(query) || 
+    item.zh.toLowerCase().includes(query) || 
+    item.mean.toLowerCase().includes(query)
+  );
+  renderGlossary(filtered);
+}
+
+// Bắt đầu kích hoạt render khi ứng dụng load
+document.addEventListener('DOMContentLoaded', () => {
+  renderCurriculum();
+  renderGlossary();
+});
+</script>
+</body>
+</html>
